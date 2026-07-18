@@ -454,8 +454,16 @@ class DialogGlowny(QDialog):
         self.spin_naraz.setValue(3)
         self.pole_login = QLineEdit(
             ustawienia_qgis.value("pobieranie_sentinel/login", ""))
-        self.pole_haslo = QLineEdit()
+        self.pole_haslo = QLineEdit(
+            ustawienia_qgis.value("pobieranie_sentinel/haslo", ""))
         self.pole_haslo.setEchoMode(QLineEdit.Password)
+        # ptaszek "zapamiętaj" — dane trafiają do ustawień QGIS na tym
+        # komputerze (hasło zapisane jawnie — nie używaj na wspólnym
+        # koncie, jeśli Ci to przeszkadza!)
+        self.ptaszek_pamietaj = QCheckBox(
+            "Zapamiętaj login i hasło na tym komputerze")
+        self.ptaszek_pamietaj.setChecked(bool(
+            ustawienia_qgis.value("pobieranie_sentinel/haslo", "")))
         uklad3.addWidget(QLabel("Data OD:"), 0, 0)
         uklad3.addWidget(self.data_od, 0, 1)
         uklad3.addWidget(QLabel("Data DO:"), 0, 2)
@@ -470,6 +478,30 @@ class DialogGlowny(QDialog):
         uklad3.addWidget(self.pole_login, 3, 1, 1, 3)
         uklad3.addWidget(QLabel("Hasło Copernicus:"), 4, 0)
         uklad3.addWidget(self.pole_haslo, 4, 1, 1, 3)
+        uklad3.addWidget(self.ptaszek_pamietaj, 5, 0, 1, 4)
+
+        # rozwijana ściągawka "Nie masz konta?" — klik pokazuje/chowa
+        # instrukcję zakładania darmowego konta Copernicus
+        self.przycisk_konto = QPushButton(
+            "Nie masz konta? Pokaż, jak założyć ▸")
+        self.przycisk_konto.setFlat(True)
+        self.przycisk_konto.setCursor(Qt.PointingHandCursor)
+        self.przycisk_konto.setStyleSheet(
+            f"color: {KOLOR}; border: none; text-align: left; "
+            f"font-weight: bold;")
+        self.opis_konta = QLabel(
+            'Konto jest darmowe i zakłada się je w 2 minuty:<br>'
+            '1. Wejdź na <a href="https://dataspace.copernicus.eu">'
+            'dataspace.copernicus.eu</a> (kliknij link)<br>'
+            '2. Kliknij <b>Register</b> w prawym górnym rogu<br>'
+            '3. Wypełnij formularz (imię, e-mail, hasło)<br>'
+            '4. Potwierdź konto linkiem z maila<br>'
+            '5. Wpisz e-mail i hasło powyżej — gotowe!')
+        self.opis_konta.setOpenExternalLinks(True)
+        self.opis_konta.setVisible(False)
+        self.przycisk_konto.clicked.connect(self.przelacz_opis_konta)
+        uklad3.addWidget(self.przycisk_konto, 6, 0, 1, 4)
+        uklad3.addWidget(self.opis_konta, 7, 0, 1, 4)
         uklad.addWidget(grupa3)
 
         # --- 4. folder ---
@@ -509,7 +541,10 @@ class DialogGlowny(QDialog):
             self.ptaszki_produktow[klucz] = ptaszek
         self.ptaszek_wczytaj = QCheckBox(
             "Po zakończeniu wczytaj gotowe produkty do QGIS")
-        self.ptaszek_wczytaj.setChecked(True)
+        self.ptaszek_wczytaj.setChecked(True)  # domyślnie zaznaczony
+        # lekki odstęp od ptaszków produktów, żeby napis nie ginął
+        self.ptaszek_wczytaj.setStyleSheet(
+            "margin-top: 12px; font-weight: bold;")
         uklad6.addWidget(self.ptaszek_wczytaj,
                          (len(silnik.PRODUKTY) + 1) // 2 + 1, 0, 1, 2)
         uklad.addWidget(grupa6)
@@ -570,6 +605,14 @@ class DialogGlowny(QDialog):
         if sciezka:
             self.pole_folder.setText(sciezka)
 
+    def przelacz_opis_konta(self):
+        """Pokazuje/chowa instrukcję zakładania konta Copernicus."""
+        widac = not self.opis_konta.isVisible()
+        self.opis_konta.setVisible(widac)
+        self.przycisk_konto.setText(
+            "Nie masz konta? Zwiń podpowiedź ▾" if widac
+            else "Nie masz konta? Pokaż, jak założyć ▸")
+
     def przelacz_satelite(self):
         """Sentinel-1 (radar)? Chmury i produkty nie mają sensu."""
         radar = self.combo_satelita.currentData() == "S1-GRD"
@@ -616,10 +659,18 @@ class DialogGlowny(QDialog):
             "produkty": produkty,
         }
 
-        # login i folder zapamiętujemy na następny raz (hasła NIE)
+        # zapamiętywanie: folder zawsze; login i hasło tylko za zgodą
+        # (odznaczenie ptaszka czyści zapamiętane dane)
         pamiec = QSettings()
-        pamiec.setValue("pobieranie_sentinel/login", ustawienia["login"])
         pamiec.setValue("pobieranie_sentinel/folder", ustawienia["folder"])
+        if self.ptaszek_pamietaj.isChecked():
+            pamiec.setValue("pobieranie_sentinel/login",
+                            ustawienia["login"])
+            pamiec.setValue("pobieranie_sentinel/haslo",
+                            ustawienia["haslo"])
+        else:
+            pamiec.setValue("pobieranie_sentinel/login", "")
+            pamiec.setValue("pobieranie_sentinel/haslo", "")
 
         try:
             # obszar -> WKT

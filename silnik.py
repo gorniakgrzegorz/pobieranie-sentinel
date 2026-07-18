@@ -258,8 +258,96 @@ def _rozciagnij_do_8bit(pasmo):
     dol, gora = np.percentile(dodatnie, (2, 98))
     if gora <= dol:
         gora = dol + 1
-    pasmo = np.clip((pasmo.astype("float32") - dol) / (gora - dol), 0, 1)
-    return (pasmo * 255).astype("uint8")
+    znorm = np.clip((pasmo.astype("float32") - dol) / (gora - dol), 0, 1)
+    wynik = (znorm * 254 + 1).astype("uint8")  # dane: 1-255
+    wynik[pasmo == 0] = 0                      # brak danych: 0 (nodata)
+    return wynik
+
+
+# =============================================================================
+#  GOTOWA SYMBOLIZACJA — palety kolorów dla wskaźników i mapy SCL.
+#  Obok każdego pliku .tif zapisujemy plik stylu .qml o tej samej nazwie:
+#  QGIS wczytuje go AUTOMATYCZNIE, więc laik od razu widzi kolorową,
+#  opisaną mapę zamiast szarej płachty.
+# =============================================================================
+
+PALETY = {
+    "NDVI": [(-1.0, "#d7191c", "woda / brak roślin"),
+             (0.0, "#fdae61", "gleba, zabudowa"),
+             (0.2, "#ffffbf", "słaba roślinność"),
+             (0.5, "#a6d96a", "dobra roślinność"),
+             (1.0, "#1a9641", "bujna roślinność")],
+    "NDRE": [(-1.0, "#d7191c", "brak roślin"),
+             (0.0, "#fdae61", "silny stres"),
+             (0.2, "#ffffbf", "umiarkowany stres"),
+             (0.5, "#a6d96a", "dobra kondycja"),
+             (1.0, "#1a9641", "wysoki chlorofil")],
+    "NDWI": [(-1.0, "#8c510a", "suchy ląd"),
+             (0.0, "#f6e8c3", "ląd"),
+             (0.2, "#80cdc1", "wilgotne / płycizny"),
+             (1.0, "#01665e", "woda")],
+    "NDMI": [(-1.0, "#d73027", "silna susza"),
+             (0.0, "#fee090", "sucho"),
+             (0.4, "#91bfdb", "wilgotno"),
+             (1.0, "#4575b4", "bardzo wilgotno")],
+    "NBR":  [(-1.0, "#67001f", "świeże pogorzelisko"),
+             (0.0, "#f7f7f7", "teren neutralny"),
+             (0.4, "#a6dba0", "roślinność"),
+             (1.0, "#1b7837", "bujna roślinność")],
+    "NDSI": [(-1.0, "#a6611a", "brak śniegu"),
+             (0.0, "#f5f5f5", "przejściowe"),
+             (0.4, "#9ecae1", "śnieg"),
+             (1.0, "#2171b5", "śnieg / lód")],
+}
+
+SCL_KLASY = [(1, "#ff0004", "piksel wadliwy"),
+             (2, "#868686", "ciemne / cienie"),
+             (3, "#774b0a", "cień chmury"),
+             (4, "#10d22c", "roślinność"),
+             (5, "#ffff52", "goła gleba"),
+             (6, "#0000ff", "woda"),
+             (7, "#818181", "niepewne"),
+             (8, "#c0c0c0", "chmura (średnie prawdop.)"),
+             (9, "#f1f1f1", "chmura gęsta"),
+             (10, "#bac5eb", "chmura wysoka (cirrus)"),
+             (11, "#52fff9", "śnieg / lód")]
+
+
+def zapisz_qml(sciezka_tif, produkt):
+    """Zapisuje obok .tif plik stylu .qml z paletą kolorów i legendą —
+    QGIS stosuje go automatycznie przy wczytaniu warstwy."""
+    if produkt in PALETY:
+        pozycje = "\n".join(
+            f'            <item alpha="255" value="{wartosc}" '
+            f'label="{wartosc:+.1f}  {opis}" color="{kolor}"/>'
+            for wartosc, kolor, opis in PALETY[produkt])
+        xml = (
+            '<!DOCTYPE qgis>\n<qgis version="3.28.0">\n  <pipe>\n'
+            '    <rasterrenderer type="singlebandpseudocolor" band="1" '
+            'opacity="1" classificationMin="-1" classificationMax="1">\n'
+            '      <rastershader>\n'
+            '        <colorrampshader colorRampType="INTERPOLATED" '
+            'classificationMode="1" clip="0">\n'
+            f'{pozycje}\n'
+            '        </colorrampshader>\n      </rastershader>\n'
+            '    </rasterrenderer>\n  </pipe>\n</qgis>\n')
+    elif produkt == "SCL":
+        pozycje = "\n".join(
+            f'          <paletteEntry value="{wartosc}" color="{kolor}" '
+            f'label="{wartosc}: {opis}" alpha="255"/>'
+            for wartosc, kolor, opis in SCL_KLASY)
+        xml = (
+            '<!DOCTYPE qgis>\n<qgis version="3.28.0">\n  <pipe>\n'
+            '    <rasterrenderer type="paletted" band="1" opacity="1">\n'
+            '      <colorPalette>\n'
+            f'{pozycje}\n'
+            '      </colorPalette>\n    </rasterrenderer>\n'
+            '  </pipe>\n</qgis>\n')
+    else:
+        return  # kompozycje mają kolory w samym pliku
+    with open(sciezka_tif.replace(".tif", ".qml"), "w",
+              encoding="utf-8") as plik:
+        plik.write(xml)
 
 
 def _znajdz_pasma_w_zipie(zip_, potrzebne):
@@ -364,7 +452,9 @@ def zrob_produkty(sciezka_zip, folder, produkty, log=print, kto=""):
                     for para in pasma[1:]:
                         macierz, _ = _wczytaj(wypakowane[para], ksztalt)
                         warstwy.append(_rozciagnij_do_8bit(macierz))
-                    _zapisz(cel, warstwy, wzorzec, gdal.GDT_Byte)
+                    # nodata=0 -> obrzeża sceny przezroczyste w QGIS
+                    _zapisz(cel, warstwy, wzorzec, gdal.GDT_Byte,
+                            nodata=0)
 
                 elif przepis["typ"] == "wskaznik":
                     a, wzorzec = _wczytaj(wypakowane[pasma[0]])
@@ -380,6 +470,7 @@ def zrob_produkty(sciezka_zip, folder, produkty, log=print, kto=""):
                         -9999).astype("float32")
                     _zapisz(cel, [wskaznik], wzorzec, gdal.GDT_Float32,
                             nodata=-9999)
+                    zapisz_qml(cel, produkt)  # paleta kolorów
 
                 elif przepis["typ"] == "scl":
                     # gotowa mapa klas ESA; wartości pikseli:
@@ -388,6 +479,7 @@ def zrob_produkty(sciezka_zip, folder, produkty, log=print, kto=""):
                     macierz, wzorzec = _wczytaj(wypakowane[pasma[0]])
                     _zapisz(cel, [macierz.astype("uint8")], wzorzec,
                             gdal.GDT_Byte, nodata=0)
+                    zapisz_qml(cel, produkt)  # legenda klas SCL
 
                 utworzone.append(cel)
                 log(f"{kto}   gotowe: {os.path.basename(cel)}")
