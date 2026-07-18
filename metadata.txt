@@ -1,0 +1,24 @@
+[general]
+name=Pobieranie Sentinel
+qgisMinimumVersion=3.16
+description=Masowe pobieranie zdjęć Sentinel-2 (L2A/L1C) i Sentinel-1 (GRD) z Copernicus Data Space z automatycznymi produktami: kompozycje RGB, CIR, SWIR, GEO, wskaźniki NDVI, NDWI, NDMI, NBR, NDSI, NDRE i mapa klas SCL. / Bulk download of Sentinel-2 and Sentinel-1 imagery with ready-made composites and indices (Polish UI).
+about=Narzędzie w całości po polsku. Wyszukiwanie i masowe pobieranie zdjęć satelitarnych z oficjalnego serwisu Copernicus Data Space Ecosystem (wymagane darmowe konto na dataspace.copernicus.eu).
+    CO MOŻNA POBRAĆ: Sentinel-2 L2A (zdjęcia optyczne z korekcją atmosferyczną), Sentinel-2 L1C (surowe zdjęcia optyczne), Sentinel-1 GRD (obrazy radarowe — widzą przez chmury i w nocy).
+    OBSZAR: warstwa poligonowa z projektu albo plik GeoPackage (.gpkg).
+    FILTRY I WYBÓR SCEN: zakres dat, maksymalne zachmurzenie, limit scen; pobieranie wszystkich, ręczny wybór z listy z ptaszkami, filtr miesięcy albo automatycznie 3 najmniej zachmurzone sceny z każdego miesiąca.
+    POBIERANIE: do 4 pobierań równolegle, automatyczne ponawianie błędów, wznawianie przerwanych sesji, raport CSV.
+    AUTOMATYCZNE PRODUKTY (GeoTIFF, dla każdej sceny Sentinel-2): kompozycje barwne RGB (kolory naturalne), CIR (roślinność na czerwono), SWIR (rolnicza), GEO (geologiczna); wskaźniki NDVI (kondycja roślinności), NDWI (woda powierzchniowa), NDMI (uwodnienie roślin, susze), NBR (pogorzeliska), NDSI (śnieg i lód), NDRE (chlorofil, wczesny stres roślin); mapa klas terenu SCL od ESA (roślinność/gleba/woda/śnieg/chmury) przydatna do maskowania chmur. Produkty mogą być automatycznie wczytane do projektu QGIS.
+    ---
+    ENGLISH SUMMARY: Polish-language plugin for searching and bulk-downloading Sentinel-2 (L2A/L1C) and Sentinel-1 (GRD) imagery from the Copernicus Data Space Ecosystem for an AOI from a project layer or GPKG file, with cloud/date filters, parallel resumable downloads, a CSV report and automatic GeoTIFF products: RGB, CIR, SWIR, GEO composites and NDVI, NDWI, NDMI, NBR, NDSI, NDRE indices plus the ESA SCL scene classification map.
+version=1.0.0
+author=Grzegorz Górniak
+email=gorniakgrzegorz@gmail.com
+changelog=1.0.0 - pierwsza wersja / first release
+tags=sentinel,sentinel-2,sentinel-1,copernicus,cdse,pobieranie,download,satelita,teledetekcja,remote sensing,l2a,l1c,grd,radar,rgb,cir,swir,geo,ndvi,ndwi,ndmi,nbr,ndsi,ndre,scl,wskaźniki,kompozycje,zachmurzenie,gpkg
+homepage=https://github.com/gorniakgrzegorz/pobieranie-sentinel
+tracker=https://github.com/gorniakgrzegorz/pobieranie-sentinel/issues
+repository=https://github.com/gorniakgrzegorz/pobieranie-sentinel
+icon=icon.png
+experimental=False
+deprecated=False
+hasProcessingProvider=no
