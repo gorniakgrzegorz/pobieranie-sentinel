@@ -41,7 +41,8 @@ class PobieranieSentinel:
         self.pasek.setObjectName("PobieranieSentinelToolbar")
         przycisk = QToolButton()
         przycisk.setDefaultAction(self.akcja)
-        przycisk.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        przycisk.setToolButtonStyle(
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.pasek.addWidget(przycisk)
 
         self.iface.addPluginToMenu("&Pobieranie Sentinel", self.akcja)

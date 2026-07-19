@@ -32,10 +32,16 @@ about=*** ENG description below ***
     .
     *** ENGLISH (SIMPLIFIED) ***
     Polish-language QGIS plugin for bulk downloading Sentinel-2 (L2A/L1C) and Sentinel-1 (GRD) imagery from the Copernicus Data Space Ecosystem. Area of interest from a project layer or a GPKG file; date and cloud-cover filters; scene picker (all / manual checklist / month filter / 3 least cloudy scenes per month); up to 4 parallel downloads with automatic retries, session resuming and a CSV report. Automatic GeoTIFF products with ready-made symbology loaded into QGIS: RGB, CIR, SWIR and GEO composites (transparent scene edges), NDVI, NDWI, NDMI, NBR, NDSI and NDRE indices with colour ramps and legends (QML files), plus the ESA SCL scene classification map with a class legend.
-version=1.0.0
+version=1.0.2
 author=Grzegorz Górniak
 email=gorniakgrzegorz@gmail.com
-changelog=1.0.0 (first release)
+changelog=1.0.2
+    - Full Qt6 compatibility (fully qualified enums, exec() instead of exec_()) - works with both Qt5 and Qt6 builds of QGIS
+    1.0.1
+    - Added LICENSE file, formatted Polish description with simplified English summary
+    - Ready-made symbology for all products: colour ramps with legends (QML) for NDVI, NDWI, NDMI, NBR, NDSI, NDRE, class legend for SCL, transparent scene edges in composites
+    - Optional saving of Copernicus credentials and a built-in "no account?" setup guide
+    1.0.0 (first release)
     - Bulk download of Sentinel-2 (L2A/L1C) and Sentinel-1 (GRD) imagery from the Copernicus Data Space Ecosystem
     - Area of interest from a QGIS project layer or a GeoPackage (GPKG) file
     - Date, cloud-cover and scene-limit filters; scene picker: all scenes, manual checklist, month filter or the 3 least cloudy scenes of each month

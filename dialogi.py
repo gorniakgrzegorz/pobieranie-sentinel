@@ -51,7 +51,7 @@ def stopka():
                    f'style="color:black; text-decoration:none;">'
                    f'{AUTOR}</a>')
     napis.setOpenExternalLinks(True)
-    napis.setAlignment(Qt.AlignRight)
+    napis.setAlignment(Qt.AlignmentFlag.AlignRight)
     napis.setStyleSheet("font-size: 8px; color: black;")
     return napis
 
@@ -236,15 +236,15 @@ class DialogWyboruScen(QDialog):
         self.tabela = QTableWidget(len(self.opisy), 4)
         self.tabela.setHorizontalHeaderLabels(
             ["Data", "Chmury", "GB", "Nazwa sceny"])
-        self.tabela.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.tabela.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.tabela.verticalHeader().setVisible(False)
         for wiersz, opis in enumerate(self.opisy):
             chmury_txt = (f"{opis['chmury']:.1f}%"
                           if opis["chmury"] <= 100 else "brak")
             # pierwsza kolumna dostaje ptaszek (checkbox w komórce)
             komorka = QTableWidgetItem(opis["data"])
-            komorka.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-            komorka.setCheckState(Qt.Checked)
+            komorka.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
+            komorka.setCheckState(Qt.CheckState.Checked)
             self.tabela.setItem(wiersz, 0, komorka)
             self.tabela.setItem(wiersz, 1, QTableWidgetItem(chmury_txt))
             self.tabela.setItem(wiersz, 2,
@@ -260,7 +260,7 @@ class DialogWyboruScen(QDialog):
 
         rzad = QHBoxLayout()
         przycisk_ok = QPushButton("POBIERZ ZAZNACZONE")
-        przycisk_ok.setCursor(Qt.PointingHandCursor)  # rączka = klikalne
+        przycisk_ok.setCursor(Qt.CursorShape.PointingHandCursor)  # rączka = klikalne
         przycisk_ok.setStyleSheet(
             f"QPushButton {{ background-color: {KOLOR}; color: white; "
             f"font-weight: bold; padding: 6px; border-radius: 4px; }} "
@@ -307,16 +307,16 @@ class DialogWyboruScen(QDialog):
         for wiersz, opis in enumerate(self.opisy):
             komorka = self.tabela.item(wiersz, 0)
             if opis["miesiac"] not in miesiace:
-                komorka.setCheckState(Qt.Unchecked)
-                komorka.setFlags(Qt.ItemIsUserCheckable)  # wyszarz
+                komorka.setCheckState(Qt.CheckState.Unchecked)
+                komorka.setFlags(Qt.ItemFlag.ItemIsUserCheckable)  # wyszarz
             else:
-                komorka.setFlags(Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+                komorka.setFlags(Qt.ItemFlag.ItemIsUserCheckable | Qt.ItemFlag.ItemIsEnabled)
 
         if tryb == "WSZYSTKIE":
             for wiersz, opis in enumerate(self.opisy):
                 self.tabela.item(wiersz, 0).setCheckState(
-                    Qt.Checked if opis["miesiac"] in miesiace
-                    else Qt.Unchecked)
+                    Qt.CheckState.Checked if opis["miesiac"] in miesiace
+                    else Qt.CheckState.Unchecked)
         elif tryb == "TOP3":
             for miesiac in miesiace:
                 w_miesiacu = [(wiersz, opis) for wiersz, opis
@@ -325,7 +325,7 @@ class DialogWyboruScen(QDialog):
                 w_miesiacu.sort(key=lambda para: para[1]["chmury"])
                 for numer, (wiersz, _) in enumerate(w_miesiacu):
                     self.tabela.item(wiersz, 0).setCheckState(
-                        Qt.Checked if numer < 3 else Qt.Unchecked)
+                        Qt.CheckState.Checked if numer < 3 else Qt.CheckState.Unchecked)
         # RECZNIE: zostawiamy jak jest
 
         self.tabela.blockSignals(False)
@@ -335,18 +335,18 @@ class DialogWyboruScen(QDialog):
         """Główny ptaszek: zaznacz/odznacz całą listę (wybrane miesiące)."""
         self.tabela.blockSignals(True)
         miesiace = self._wybrane_miesiace()
-        stan = (Qt.Checked if self.zaznacz_wszystkie.isChecked()
-                else Qt.Unchecked)
+        stan = (Qt.CheckState.Checked if self.zaznacz_wszystkie.isChecked()
+                else Qt.CheckState.Unchecked)
         for wiersz, opis in enumerate(self.opisy):
             self.tabela.item(wiersz, 0).setCheckState(
-                stan if opis["miesiac"] in miesiace else Qt.Unchecked)
+                stan if opis["miesiac"] in miesiace else Qt.CheckState.Unchecked)
         self.tabela.blockSignals(False)
         self.przelicz_licznik()
 
     def przelicz_licznik(self):
         ile, gb = 0, 0.0
         for wiersz, opis in enumerate(self.opisy):
-            if self.tabela.item(wiersz, 0).checkState() == Qt.Checked:
+            if self.tabela.item(wiersz, 0).checkState() == Qt.CheckState.Checked:
                 ile += 1
                 gb += opis["gb"]
         self.licznik.setText(f"<b>Zaznaczone: {ile} zdjęć, "
@@ -356,7 +356,7 @@ class DialogWyboruScen(QDialog):
         """Zbiera zaznaczone sceny i pyta 'Jesteś pewien?' z konkretami."""
         wybrane, gb = [], 0.0
         for wiersz, opis in enumerate(self.opisy):
-            if self.tabela.item(wiersz, 0).checkState() == Qt.Checked:
+            if self.tabela.item(wiersz, 0).checkState() == Qt.CheckState.Checked:
                 wybrane.append(opis["scena"])
                 gb += opis["gb"]
         if not wybrane:
@@ -368,7 +368,7 @@ class DialogWyboruScen(QDialog):
                 self, "Jesteś pewien?",
                 f"Do pobrania: {len(wybrane)} zdjęć, ok. {gb:.1f} GB.\n"
                 f"Upewnij się, że masz tyle miejsca na dysku.\n\nRuszamy?",
-                QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes:
             self.wybrane = wybrane
             self.accept()
 
@@ -421,7 +421,7 @@ class DialogGlowny(QDialog):
         self.radio_warstwa = QRadioButton("Warstwa z projektu:")
         self.radio_warstwa.setChecked(True)
         self.combo_warstwa = QgsMapLayerComboBox()
-        self.combo_warstwa.setFilters(QgsMapLayerProxyModel.PolygonLayer)
+        self.combo_warstwa.setFilters(QgsMapLayerProxyModel.Filter.PolygonLayer)
         self.radio_plik = QRadioButton("Plik GeoPackage (.gpkg):")
         self.pole_gpkg = QLineEdit()
         przycisk_gpkg = QPushButton("Przeglądaj...")
@@ -456,7 +456,7 @@ class DialogGlowny(QDialog):
             ustawienia_qgis.value("pobieranie_sentinel/login", ""))
         self.pole_haslo = QLineEdit(
             ustawienia_qgis.value("pobieranie_sentinel/haslo", ""))
-        self.pole_haslo.setEchoMode(QLineEdit.Password)
+        self.pole_haslo.setEchoMode(QLineEdit.EchoMode.Password)
         # ptaszek "zapamiętaj" — dane trafiają do ustawień QGIS na tym
         # komputerze (hasło zapisane jawnie — nie używaj na wspólnym
         # koncie, jeśli Ci to przeszkadza!)
@@ -485,7 +485,7 @@ class DialogGlowny(QDialog):
         self.przycisk_konto = QPushButton(
             "Nie masz konta? Pokaż, jak założyć ▸")
         self.przycisk_konto.setFlat(True)
-        self.przycisk_konto.setCursor(Qt.PointingHandCursor)
+        self.przycisk_konto.setCursor(Qt.CursorShape.PointingHandCursor)
         self.przycisk_konto.setStyleSheet(
             f"color: {KOLOR}; border: none; text-align: left; "
             f"font-weight: bold;")
@@ -564,7 +564,7 @@ class DialogGlowny(QDialog):
         self.przycisk_start = QPushButton("URUCHOM POBIERANIE")
         # kursor-rączka po najechaniu + ciemniejszy odcień (hover),
         # żeby było jasne, że to klikalny przycisk
-        self.przycisk_start.setCursor(Qt.PointingHandCursor)
+        self.przycisk_start.setCursor(Qt.CursorShape.PointingHandCursor)
         self.przycisk_start.setStyleSheet(
             f"QPushButton {{ background-color: {KOLOR}; color: white; "
             f"font-weight: bold; padding: 10px; border-radius: 4px; }} "
@@ -716,7 +716,8 @@ class DialogGlowny(QDialog):
 
         # okienko wyboru scen
         wybor = DialogWyboruScen(sceny, strategia, self)
-        if wybor.exec_() != QDialog.Accepted or not wybor.wybrane:
+        if (wybor.exec() != QDialog.DialogCode.Accepted
+                or not wybor.wybrane):
             self.loguj("Anulowano wybór — nic nie pobieram.")
             return
         sceny = wybor.wybrane
